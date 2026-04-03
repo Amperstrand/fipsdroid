@@ -12,13 +12,15 @@ Android FIPS BLE Leaf Node — an experimental implementation attempting to conn
 | Component | Status |
 |-----------|--------|
 | Embassy Timer Audit | ✅ Complete |
-| Rust Workspace | ✅ Scaffolded |
-| Android Project | ✅ Scaffolded |
-| Type Definitions | ✅ Defined |
+| Rust Workspace | ✅ Complete |
+| Android Project | ✅ Complete |
+| Type Definitions | ✅ Complete |
 | BLE Transport | ✅ Complete |
-| Node Lifecycle | 🚧 In Progress |
-| UniFFI Bridge | 🚧 In Progress |
+| Node Lifecycle | ✅ Complete |
+| UniFFI Bridge | ✅ Complete |
 | Android BLE Manager | ✅ Complete |
+| Cargo-ndk Setup | ✅ Complete |
+| CI/CD | ✅ Added |
 | End-to-End Test | ❌ Not Started |
 
 ## What This Is
