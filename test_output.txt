@@ -1,7 +1,14 @@
 warning: variable does not need to be mutable
   --> crates/fipsdroid-core/src/transport/mod.rs:38:18
    |
-38warning: variable does not need to be mutable
+38 |             let (mut tx_to_transport, rx_to_transport) = mpsc::channel(4);
+   |                  ----^^^^^^^^^^^^^^^
+   |                  |
+   |                  help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
   --> crates/fipsdroid-core/src/transport/mod.rs:38:18
    |
 38 |             let (mut tx_to_transport, rx_to_transport) = mpsc::channel(4);
@@ -19,13 +26,6 @@ warning: variable does not need to be mutable
    |                  |
    |                  help: remove this `mut`
 
- |             let (mut tx_to_transport, rx_to_transport) = mpsc::channel(4);
-   |                  ----^^^^^^^^^^^^^^^
-   |                  |
-   |                  help: remove this `mut`
-   |
-   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
-
 warning: variable does not need to be mutable
   --> crates/fipsdroid-core/src/transport/mod.rs:68:18
    |
@@ -35,10 +35,18 @@ warning: variable does not need to be mutable
    |                  help: remove this `mut`
 
 warning: `fipsdroid-core` (lib test) generated 2 warnings (run `cargo fix --lib -p fipsdroid-core --tests` to apply 2 suggestions)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.41s
 warning: `fipsdroid-core` (lib test) generated 2 warnings (run `cargo fix --lib -p fipsdroid-core --tests` to apply 2 suggestions)
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.53s
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.53s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.41s
      Running unittests src/lib.rs (target/debug/deps/fipsdroid_core-79e943c20c872c8f)
      Running unittests src/lib.rs (target/debug/deps/fipsdroid_core-79e943c20c872c8f)
    Doc-tests fipsdroid_core
    Doc-tests fipsdroid_core
+error: doctest failed, to rerun pass `--doc`
+
+Caused by:
+error: doctest failed, to rerun pass `--doc`
+
+Caused by:
+  process didn't exit successfully: `/Users/macbook/.rustup/toolchains/stable-x86_64-apple-darwin/bin/rustdoc --edition=2021 --crate-type cdylib --crate-type rlib --color auto --crate-name fipsdroid_core --test crates/fipsdroid-core/src/lib.rs --test-run-directory /Users/macbook/src/fipsdroid/crates/fipsdroid-core -L dependency=/Users/macbook/src/fipsdroid/target/debug/deps -L dependency=/Users/macbook/src/fipsdroid/target/debug/deps --extern embassy_futures=/Users/macbook/src/fipsdroid/target/debug/deps/libembassy_futures-81492fa0023b2fff.rlib --extern embassy_time=/Users/macbook/src/fipsdroid/target/debug/deps/libembassy_time-9fa37a26380c664c.rlib --extern fipsdroid_core=/Users/macbook/src/fipsdroid/target/debug/deps/libfipsdroid_core.rlib --extern microfips_core=/Users/macbook/src/fipsdroid/target/debug/deps/libmicrofips_core-b6f93d42c2eb5700.rlib --extern microfips_protocol=/Users/macbook/src/fipsdroid/target/debug/deps/libmicrofips_protocol-5da2861c81058310.rlib --extern rand=/Users/macbook/src/fipsdroid/target/debug/deps/librand-37b30f48c6d72d2f.rlib --extern thiserror=/Users/macbook/src/fipsdroid/target/debug/deps/libthiserror-595adcf47d5f63fa.rlib --extern tokio=/Users/macbook/src/fipsdroid/target/debug/deps/libtokio-edb190b4e01263a6.rlib --extern tracing=/Users/macbook/src/fipsdroid/target/debug/deps/libtracing-5d303ba7fbf1539f.rlib --extern uniffi=/Users/macbook/src/fipsdroid/target/debug/deps/libuniffi-899ac8e615d7891b.rlib -C embed-bitcode=no --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' --error-format human` (signal: 13, SIGPIPE: write on a pipe with no one to read)
+  process didn't exit successfully: `/Users/macbook/.rustup/toolchains/stable-x86_64-apple-darwin/bin/rustdoc --edition=2021 --crate-type cdylib --crate-type rlib --color auto --crate-name fipsdroid_core --test crates/fipsdroid-core/src/lib.rs --test-run-directory /Users/macbook/src/fipsdroid/crates/fipsdroid-core -L dependency=/Users/macbook/src/fipsdroid/target/debug/deps -L dependency=/Users/macbook/src/fipsdroid/target/debug/deps --extern embassy_futures=/Users/macbook/src/fipsdroid/target/debug/deps/libembassy_futures-81492fa0023b2fff.rlib --extern embassy_time=/Users/macbook/src/fipsdroid/target/debug/deps/libembassy_time-9fa37a26380c664c.rlib --extern fipsdroid_core=/Users/macbook/src/fipsdroid/target/debug/deps/libfipsdroid_core.rlib --extern microfips_core=/Users/macbook/src/fipsdroid/target/debug/deps/libmicrofips_core-b6f93d42c2eb5700.rlib --extern microfips_protocol=/Users/macbook/src/fipsdroid/target/debug/deps/libmicrofips_protocol-5da2861c81058310.rlib --extern rand=/Users/macbook/src/fipsdroid/target/debug/deps/librand-37b30f48c6d72d2f.rlib --extern thiserror=/Users/macbook/src/fipsdroid/target/debug/deps/libthiserror-595adcf47d5f63fa.rlib --extern tokio=/Users/macbook/src/fipsdroid/target/debug/deps/libtokio-edb190b4e01263a6.rlib --extern tracing=/Users/macbook/src/fipsdroid/target/debug/deps/libtracing-5d303ba7fbf1539f.rlib --extern uniffi=/Users/macbook/src/fipsdroid/target/debug/deps/libuniffi-899ac8e615d7891b.rlib -C embed-bitcode=no --check-cfg 'cfg(docsrs,test)' --check-cfg 'cfg(feature, values())' --error-format human` (signal: 13, SIGPIPE: write on a pipe with no one to read)
