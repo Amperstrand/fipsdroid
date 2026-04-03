@@ -1,0 +1,3 @@
+[workspace]
+members = ["crates/fipsdroid-core"]
+resolver = "2"

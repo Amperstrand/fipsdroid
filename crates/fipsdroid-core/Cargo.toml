@@ -1,0 +1,18 @@
+[package]
+name = "fipsdroid-core"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+microfips-protocol = { git = "https://github.com/Amperstrand/microfips", features = ["std"] }
+microfips-core = { git = "https://github.com/Amperstrand/microfips" }
+embassy-time = { version = "0.5", features = ["std", "generic-queue-32"] }
+embassy-futures = "0.1"
+tokio = { version = "1", features = ["rt", "sync", "macros"] }
+uniffi = { version = "0.28" }
+thiserror = "2"
+tracing = "0.1"
+rand = "0.8"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
