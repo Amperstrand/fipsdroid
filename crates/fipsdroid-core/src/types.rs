@@ -1,5 +1,3 @@
-use uniffi;
-
 #[derive(Debug, Clone, PartialEq, Eq, uniffi::Enum)]
 pub enum ConnectionState {
     Disconnected,

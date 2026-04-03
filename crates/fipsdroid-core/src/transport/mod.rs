@@ -35,7 +35,7 @@ mod tests {
     fn pubkey_exchange_format_valid_and_invalid() {
         let rt = Builder::new_current_thread().enable_all().build().unwrap();
         rt.block_on(async {
-            let (mut tx_to_transport, rx_to_transport) = mpsc::channel(4);
+            let (tx_to_transport, rx_to_transport) = mpsc::channel(4);
             let (tx_from_transport, mut rx_from_transport) = mpsc::channel(4);
             let (close_tx, _close_rx) = mpsc::channel(1);
             let mut transport = BleTransport::new(rx_to_transport, tx_from_transport, close_tx);
@@ -65,7 +65,7 @@ mod tests {
     fn close_and_timeout_behavior() {
         let rt = Builder::new_current_thread().enable_all().build().unwrap();
         rt.block_on(async {
-            let (mut incoming_tx, incoming_rx) = mpsc::channel(4);
+            let (incoming_tx, incoming_rx) = mpsc::channel(4);
             let (outgoing_tx, _outgoing_rx) = mpsc::channel(4);
             let (close_tx, mut close_rx) = mpsc::channel(1);
             let mut transport = BleTransport::new(incoming_rx, outgoing_tx, close_tx);
