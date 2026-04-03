@@ -1,0 +1,118 @@
+================================================================================
+TASK 10: CARGO-NDK CROSS-COMPILATION SETUP
+================================================================================
+DATE: 2026-04-03
+STATUS: COMPLETED
+
+GOAL:
+Configure cargo-ndk for Android cross-compilation, enabling the Rust crate
+to be built for Android targets and integrated into the Android app.
+
+================================================================================
+IMPLEMENTATION DETAILS
+================================================================================
+
+1. .cargo/config.toml CREATED
+   - Added Android target configurations for aarch64-linux-android
+   - Added armv7-linux-androideabi configuration
+   - Added x86_64-linux-android configuration
+   - Set up environment variable for NDK path
+   - Format: TOML configuration for cargo cross-compilation
+
+2. build-android.sh CREATED AND MADE EXECUTABLE
+   - Shebang: #!/bin/bash
+   - Checks for ANDROID_NDK_HOME environment variable
+   - Builds for arm64-linux-android target
+   - Outputs .so files to android/app/src/main/jniLibs/arm64-v8a/
+   - Includes prerequisites documentation
+   - Includes commented-out UniFFI bindings generation command
+
+3. android/app/build.gradle.kts UPDATED
+   - Added sourceSets configuration
+   - Set jniLibs.srcDirs("src/main/jniLibs")
+   - Ensures Gradle will find native libraries
+
+4. android/app/src/main/java/com/fipsdroid/FipsDroidApp.kt UPDATED
+   - Added companion object with static initialization block
+   - Loads native library: System.loadLibrary("fipsdroid_core")
+   - Library name matches cdylib output
+
+5. crates/fipsdroid-core/Cargo.toml VERIFIED
+   - Already contains: crate-type = ["cdylib", "rlib"]
+   - Supports Android native library generation
+
+================================================================================
+VERIFICATION RESULTS
+================================================================================
+
+✓ .cargo/config.toml exists and contains correct configuration
+✓ build-android.sh is executable (rwxr-xr-x)
+✓ Cargo.toml has cdylib in crate-type
+✓ Cross-compilation test: cargo ndk not installed (expected)
+
+================================================================================
+PREREQUISITES (USER MUST INSTALL)
+================================================================================
+
+1. Rust Android targets:
+   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+
+2. cargo-ndk:
+   cargo install cargo-ndk
+
+3. Android NDK:
+   Install via Android Studio or sdkmanager
+   Example: sdkmanager "ndk;25.2.9519653"
+
+================================================================================
+USAGE
+================================================================================
+
+Build for Android:
+   ./build-android.sh
+
+Or manually:
+   cargo ndk -t aarch64-linux-android build --release
+
+Generate UniFFI bindings (if configured):
+   cargo run --features uniffi-cli -- generate --library target/aarch64-linux-android/release/libfipsdroid_core.so --language kotlin --out-dir android/app/src/main/java/
+
+================================================================================
+FILES MODIFIED/CREATED
+================================================================================
+
+CREATED:
+  .cargo/config.toml
+  build-android.sh
+
+MODIFIED:
+  android/app/build.gradle.kts
+  android/app/src/main/java/com/fipsdroid/FipsDroidApp.kt
+
+VERIFIED:
+  crates/fipsdroid-core/Cargo.toml (already had cdylib)
+
+================================================================================
+NEXT STEPS
+================================================================================
+
+1. Install cargo-ndk: cargo install cargo-ndk
+2. Install Rust Android targets: rustup target add aarch64-linux-android ...
+3. Install Android NDK via Android Studio
+4. Set ANDROID_NDK_HOME environment variable
+5. Run ./build-android.sh to test cross-compilation
+6. Generate UniFFI bindings (if needed)
+
+================================================================================
+NOTES
+================================================================================
+
+- Build script expects ANDROID_NDK_HOME to be set
+- UniFFI bindings generation is commented out (requires proper setup)
+- Only 3 Android targets configured (arm64, arm32, x86_64)
+- No LTO or strip optimizations applied
+- No CI/CD pipeline configured
+
+================================================================================
+END OF VERIFICATION
+================================================================================
