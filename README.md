@@ -15,10 +15,10 @@ Android FIPS BLE Leaf Node — an experimental implementation attempting to conn
 | Rust Workspace | ✅ Scaffolded |
 | Android Project | ✅ Scaffolded |
 | Type Definitions | ✅ Defined |
-| BLE Transport | 🚧 In Progress |
+| BLE Transport | ✅ Complete |
 | Node Lifecycle | 🚧 In Progress |
 | UniFFI Bridge | 🚧 In Progress |
-| Android BLE Manager | 🚧 In Progress |
+| Android BLE Manager | ✅ Complete |
 | End-to-End Test | ❌ Not Started |
 
 ## What This Is

@@ -1,6 +1,6 @@
 use uniffi;
 
-#[derive(Debug, Clone, uniffi::Enum)]
+#[derive(Debug, Clone, PartialEq, Eq, uniffi::Enum)]
 pub enum ConnectionState {
     Disconnected,
     Connecting,

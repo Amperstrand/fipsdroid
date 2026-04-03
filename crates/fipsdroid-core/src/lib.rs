@@ -1,14 +1,12 @@
+uniffi::setup_scaffolding!();
+
 mod bridge;
 mod error;
-mod node;
-mod transport;
+pub mod node;
+pub mod transport;
 mod types;
 
+pub use bridge::{FipsDroidBridge, FipsDroidCallback};
 pub use error::FipsDroidError;
+pub use node::{DefaultFipsDroidNode, FipsDroidNode};
 pub use types::*;
-
-/// Marker type required by UniFFI derive macros
-#[doc(hidden)]
-#[repr(C)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct UniFfiTag;

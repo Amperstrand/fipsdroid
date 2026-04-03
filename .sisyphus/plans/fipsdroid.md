@@ -620,7 +620,7 @@ Max Concurrent: 5 (Wave 1 & 2)
 
 ### Wave 2: Core Implementation (After Wave 1)
 
-- [ ] 6. BLE Transport Trait Implementation
+- [x] 6. BLE Transport Trait Implementation
 
   **What to do**:
   - Implement `microfips_protocol::Transport` trait for Android BLE L2CAP:
@@ -718,7 +718,7 @@ Max Concurrent: 5 (Wave 1 & 2)
   - Files: `crates/fipsdroid-core/src/transport/mod.rs`, `crates/fipsdroid-core/src/transport/ble.rs`, `crates/fipsdroid-core/src/transport/mock.rs`
   - Pre-commit: `cargo test -p fipsdroid-core`
 
-- [ ] 7. Node Lifecycle Wrapper
+- [x] 7. Node Lifecycle Wrapper
 
   **What to do**:
   - Create `crates/fipsdroid-core/src/node.rs` — wrapper around `microfips_protocol::Node`:
@@ -895,7 +895,7 @@ Max Concurrent: 5 (Wave 1 & 2)
   - Files: `crates/fipsdroid-core/src/bridge.rs`, UniFFI config files
   - Pre-commit: `cargo test -p fipsdroid-core`
 
-- [ ] 9. Android BLE Permissions + Connection Manager
+- [x] 9. Android BLE Permissions + Connection Manager
 
   **What to do**:
   - Create `android/app/src/main/java/com/fipsdroid/ble/BleConnectionManager.kt`:
@@ -987,7 +987,7 @@ Max Concurrent: 5 (Wave 1 & 2)
   - Files: `android/app/src/main/java/com/fipsdroid/ble/BleConnectionManager.kt`, `android/app/src/main/java/com/fipsdroid/ble/BlePermissions.kt`
   - Pre-commit: `./gradlew test`
 
-- [ ] 10. Cargo-ndk Cross-Compilation Setup
+- [x] 10. Cargo-ndk Cross-Compilation Setup
 
   **What to do**:
   - Install and configure `cargo-ndk` for Android cross-compilation:

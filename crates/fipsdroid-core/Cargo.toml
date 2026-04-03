@@ -8,7 +8,7 @@ microfips-protocol = { git = "https://github.com/Amperstrand/microfips", feature
 microfips-core = { git = "https://github.com/Amperstrand/microfips" }
 embassy-time = { version = "0.5", features = ["std", "generic-queue-32"] }
 embassy-futures = "0.1"
-tokio = { version = "1", features = ["rt", "sync", "macros"] }
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros", "time"] }
 uniffi = { version = "0.28" }
 thiserror = "2"
 tracing = "0.1"
