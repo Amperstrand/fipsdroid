@@ -30,7 +30,7 @@ import java.util.UUID
 private const val TAG = "BleDemo"
 private val SERVICE_UUID = UUID.fromString("9C90B790-2CC5-42C0-9F87-C9CC40648F4C")
 private const val INTENT_EXTRA_PSM_OVERRIDE = "psm_override"
-private const val PSM_DYNAMIC_OBSERVED = 194
+private val OBSERVED_PSM_FALLBACKS = listOf(192, 194)
 
 class BleDemoActivity : ComponentActivity() {
 
@@ -389,8 +389,10 @@ class BleDemoActivity : ComponentActivity() {
             candidates += psmFromIntent
         }
         candidates += PSM_FIPS
-        if (!candidates.contains(PSM_DYNAMIC_OBSERVED)) {
-            candidates += PSM_DYNAMIC_OBSERVED
+        for (fallbackPsm in OBSERVED_PSM_FALLBACKS) {
+            if (!candidates.contains(fallbackPsm)) {
+                candidates += fallbackPsm
+            }
         }
 
         return candidates.distinct()
