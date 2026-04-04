@@ -96,8 +96,11 @@ fun BlePermissionHandler(
                 onDenied()
             }
             is BleState.AdapterDisabled -> {
-                Log.w(TAG, "BLE adapter is disabled")
-                onDenied()
+                Log.w(TAG, "BLE adapter is disabled — granting permissions first, then caller should prompt BT enable")
+                if (!permissionRequested) {
+                    permissionRequested = true
+                    permissionLauncher.launch(BLE_PERMISSIONS)
+                }
             }
             is BleState.Ready -> {
                 Log.i(TAG, "BLE already ready")
@@ -121,7 +124,7 @@ fun BlePermissionHandler(
             title = { Text("Bluetooth Permissions Required") },
             text = {
                 Text(
-                    "FipsDroid needs Bluetooth permissions to connect to FIPS devices " +
+                    "FipsDroid needs Bluetooth and location permissions to connect to FIPS devices " +
                     "over BLE L2CAP. Without these permissions, the app cannot function."
                 )
             },

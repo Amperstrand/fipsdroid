@@ -1,0 +1,18 @@
+# FIPS Daemon Test Config for BLE Relay
+# TEST ONLY - Do not use in production
+
+identity:
+  nsec: "NSEC1T8WWZFZQXFPFV0XTZ2QZ9GDFZQTPQ90PRQW0F8WFQZDYZ8RPWTDTPQGDGQF8W9FDQQQQQQLSM0D"
+
+transports:
+  tcp:
+    bind_addr: "127.0.0.1:4443"
+    mtu: 1400
+
+peers:
+  - npub: "NPUB1T8WWZFZQXFPFV0XTZ2QZ9GDFZQTPQ90PRQW0F8WFQZDYZ8RPWTDTPQGDGQF8W9FDQQQQQQW8ATR"
+    alias: "android-peer"
+    addresses:
+      - transport: tcp
+        addr: "127.0.0.1:4443"
+    connect_policy: "auto_connect"

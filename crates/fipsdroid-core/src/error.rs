@@ -2,8 +2,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error, uniffi::Error)]
 pub enum FipsDroidError {
-    #[error("Runtime error: {message}")]
-    RuntimeError { message: String },
+    #[error("Runtime error: {details}")]
+    RuntimeError { details: String },
 
     #[error("Bridge is already running")]
     AlreadyRunning,
@@ -14,11 +14,11 @@ pub enum FipsDroidError {
     #[error("BLE unavailable")]
     BleUnavailable,
 
-    #[error("Connection failed: {message}")]
-    ConnectionFailed { message: String },
+    #[error("Connection failed: {details}")]
+    ConnectionFailed { details: String },
 
-    #[error("Handshake failed: {message}")]
-    HandshakeFailed { message: String },
+    #[error("Handshake failed: {details}")]
+    HandshakeFailed { details: String },
 
     #[error("Timeout")]
     Timeout,
@@ -29,6 +29,6 @@ pub enum FipsDroidError {
     #[error("Invalid peer key")]
     InvalidPeerKey,
 
-    #[error("Protocol error: {message}")]
-    ProtocolError { message: String },
+    #[error("Protocol error: {details}")]
+    ProtocolError { details: String },
 }

@@ -46,7 +46,7 @@ impl FipsDroidBridge {
             .enable_all()
             .build()
             .map_err(|e| FipsDroidError::RuntimeError {
-                message: format!("Failed to create tokio runtime: {e}"),
+                details: format!("Failed to create tokio runtime: {e}"),
             })?;
 
         let inner = Arc::new(Mutex::new(BridgeInner {
@@ -74,7 +74,7 @@ impl FipsDroidBridge {
 
     pub fn start(&self, callback: Box<dyn FipsDroidCallback>) -> Result<(), FipsDroidError> {
         let mut inner = self.inner.lock().map_err(|e| FipsDroidError::RuntimeError {
-            message: format!("Lock poisoned: {e}"),
+            details: format!("Lock poisoned: {e}"),
         })?;
 
         if inner.running {
@@ -129,7 +129,7 @@ impl FipsDroidBridge {
                 Ok(pk) => pk,
                 Err(e) => {
                     let err = FipsDroidError::HandshakeFailed {
-                        message: format!("Failed to derive local pubkey: {:?}", e),
+                        details: format!("Failed to derive local pubkey: {:?}", e),
                     };
                     if let Ok(mut inner) = inner_clone.lock() {
                         if let Some(ref cb) = inner.callback {
@@ -223,7 +223,7 @@ impl FipsDroidBridge {
 
     pub fn stop(&self) -> Result<(), FipsDroidError> {
         let mut inner = self.inner.lock().map_err(|e| FipsDroidError::RuntimeError {
-            message: format!("Lock poisoned: {e}"),
+            details: format!("Lock poisoned: {e}"),
         })?;
 
         if !inner.running {
@@ -244,7 +244,7 @@ impl FipsDroidBridge {
 
     pub fn feed_incoming(&self, data: Vec<u8>) -> Result<(), FipsDroidError> {
         let inner = self.inner.lock().map_err(|e| FipsDroidError::RuntimeError {
-            message: format!("Lock poisoned: {e}"),
+            details: format!("Lock poisoned: {e}"),
         })?;
 
         if let Some(ref tx) = inner.incoming_tx {
