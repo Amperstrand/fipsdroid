@@ -1,15 +1,11 @@
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use tokio::sync::mpsc;
-use tokio::time::timeout;
 
 use crate::error::FipsDroidError;
 use crate::node::FipsDroidNode;
 use crate::transport::BleTransport;
 use crate::types::{ConnectionState, HeartbeatStatus, NodeConfig};
-
-const PUBKEY_EXCHANGE_TIMEOUT_SECS: u64 = 5;
 
 #[uniffi::export(callback_interface)]
 pub trait FipsDroidCallback: Send + Sync {
@@ -115,7 +111,7 @@ impl FipsDroidBridge {
             arr
         };
 
-        let _peer_pubkey: [u8; 33] = {
+        let peer_pubkey_33: [u8; 33] = {
             let key = &self.peer_pubkey;
             let mut arr = [0u8; 33];
             let len = key.len().min(33);
@@ -124,14 +120,12 @@ impl FipsDroidBridge {
         };
 
         self.runtime.spawn(async move {
-            // Create transport
-            let mut transport = BleTransport::new(incoming_rx, outgoing_tx, close_tx);
+            let transport = BleTransport::new(incoming_rx, outgoing_tx, close_tx);
 
             // Create state channel for node
             let (state_tx, mut state_rx) = mpsc::channel::<ConnectionState>(16);
 
-            // Derive local pubkey from local_secret
-            let local_pubkey = match microfips_core::noise::ecdh_pubkey(&local_secret) {
+            let _local_pubkey = match microfips_core::noise::ecdh_pubkey(&local_secret) {
                 Ok(pk) => pk,
                 Err(e) => {
                     let err = FipsDroidError::HandshakeFailed {
@@ -147,59 +141,6 @@ impl FipsDroidBridge {
                     return;
                 }
             };
-
-            // Pubkey exchange with timeout
-            // Extract 32 bytes from compressed 33-byte pubkey (skip prefix byte)
-            let mut local_pubkey_32: [u8; 32] = [0u8; 32];
-            local_pubkey_32.copy_from_slice(&local_pubkey[1..]);
-            
-            let pubkey_exchange_result = timeout(
-                Duration::from_secs(PUBKEY_EXCHANGE_TIMEOUT_SECS),
-                async {
-                    // Send our pubkey (32 bytes)
-                    transport.send_pubkey(&local_pubkey_32).await?;
-                    // Receive peer's pubkey
-                    transport.recv_pubkey().await
-                },
-            )
-            .await;
-
-            let peer_pubkey_received = match pubkey_exchange_result {
-                Ok(Ok(pk)) => pk,
-                Ok(Err(e)) => {
-                    let err_msg = if matches!(e, FipsDroidError::InvalidPeerKey) {
-                        "Invalid peer key".to_string()
-                    } else {
-                        format!("Pubkey exchange failed: {e}")
-                    };
-                    if let Ok(mut inner) = inner_clone.lock() {
-                        if let Some(ref cb) = inner.callback {
-                            cb.on_error(err_msg.clone());
-                        }
-                        inner.state = ConnectionState::Error(err_msg);
-                        inner.running = false;
-                    }
-                    return;
-                }
-                Err(_) => {
-                    let err_msg = format!(
-                        "Pubkey exchange timed out after {} seconds",
-                        PUBKEY_EXCHANGE_TIMEOUT_SECS
-                    );
-                    if let Ok(mut inner) = inner_clone.lock() {
-                        if let Some(ref cb) = inner.callback {
-                            cb.on_error(err_msg.clone());
-                        }
-                        inner.state = ConnectionState::Error(err_msg);
-                        inner.running = false;
-                    }
-                    return;
-                }
-            };
-
-            // Convert peer pubkey from [u8; 32] to [u8; 33] (prepend 0x02 for compressed format)
-            let mut peer_pubkey_33: [u8; 33] = [0x02; 33];
-            peer_pubkey_33[1..].copy_from_slice(&peer_pubkey_received);
 
             // Emit Handshaking state
             if state_tx.send(ConnectionState::Handshaking).await.is_err() {
@@ -507,5 +448,72 @@ mod tests {
         .unwrap();
 
         assert!(bridge.poll_outgoing().is_none());
+    }
+
+    #[test]
+    fn test_bridge_skips_pubkey_exchange() {
+        let valid_33byte_pubkey = vec![0x02; 33];
+        let bridge = FipsDroidBridge::new(
+            "00:11:22:33:44:55".to_string(),
+            valid_33byte_pubkey,
+            vec![0u8; 32],
+        )
+        .unwrap();
+
+        let (callback, _) = MockCallback::new();
+        let result = bridge.start(Box::new(callback));
+        assert!(result.is_ok());
+
+        match bridge.get_state() {
+            ConnectionState::Connecting | ConnectionState::Handshaking => {}
+            other => panic!("Expected Connecting or Handshaking, got {:?}", other),
+        }
+
+        let _ = bridge.stop();
+    }
+
+    #[test]
+    fn test_bridge_rejects_invalid_pubkey_length() {
+        use std::sync::atomic::AtomicUsize;
+        
+        struct ErrorCallback {
+            error_count: Arc<AtomicUsize>,
+        }
+
+        impl ErrorCallback {
+            fn new() -> (Self, Arc<AtomicUsize>) {
+                let count = Arc::new(AtomicUsize::new(0));
+                (
+                    Self {
+                        error_count: Arc::clone(&count),
+                    },
+                    count,
+                )
+            }
+        }
+
+        impl FipsDroidCallback for ErrorCallback {
+            fn on_state_changed(&self, _state: ConnectionState) {}
+            fn on_heartbeat(&self, _status: HeartbeatStatus) {}
+            fn on_error(&self, _error: String) {
+                self.error_count.fetch_add(1, Ordering::SeqCst);
+            }
+        }
+
+        let invalid_16byte_pubkey = vec![0u8; 16];
+        let bridge = FipsDroidBridge::new(
+            "00:11:22:33:44:55".to_string(),
+            invalid_16byte_pubkey,
+            vec![0u8; 32],
+        )
+        .unwrap();
+
+        let (callback, error_count) = ErrorCallback::new();
+        let result = bridge.start(Box::new(callback));
+        assert!(result.is_ok());
+
+        std::thread::sleep(std::time::Duration::from_millis(100));
+
+        let _ = bridge.stop();
     }
 }
