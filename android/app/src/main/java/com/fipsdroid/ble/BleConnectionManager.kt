@@ -14,6 +14,7 @@ import java.io.Closeable
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.system.measureTimeMillis
 
 private const val TAG = "BleConnectionManager"
 const val PSM_FIPS: Int = 0x0085
@@ -65,30 +66,42 @@ class BleConnectionManager(private val context: Context) {
     suspend fun connect(address: String, psm: Int = PSM_FIPS): Result<L2capConnection> =
         withContext(Dispatchers.IO) {
             try {
+                Log.i(TAG, "connect() called | address=$address psm=$psm")
                 val adapter = bluetoothAdapter
-                    ?: return@withContext Result.failure(BleError.AdapterUnavailable())
+                    ?: run {
+                        Log.e(TAG, "Bluetooth adapter unavailable")
+                        return@withContext Result.failure(BleError.AdapterUnavailable())
+                    }
 
                 if (!adapter.isEnabled) {
+                    Log.w(TAG, "Bluetooth adapter is disabled")
                     return@withContext Result.failure(BleError.AdapterDisabled())
                 }
 
                 if (!areBlePermissionsGranted(context)) {
+                    Log.e(TAG, "BLE permissions not granted for connect()")
                     return@withContext Result.failure(BleError.PermissionsNotGranted())
                 }
 
                 if (!BluetoothAdapter.checkBluetoothAddress(address)) {
+                    Log.e(TAG, "Invalid Bluetooth address rejected: $address")
                     return@withContext Result.failure(BleError.InvalidAddress(address))
                 }
 
+                Log.d(TAG, "Disconnecting current connection before new connect() if present")
                 disconnect()
 
                 val device: BluetoothDevice = adapter.getRemoteDevice(address)
-                Log.i(TAG, "Connecting to $address on PSM $psm")
+                Log.i(TAG, "Attempting L2CAP connect | remote=${device.address} psm=$psm timeoutMs=$CONNECTION_TIMEOUT_MS")
 
-                val socket = withTimeout(CONNECTION_TIMEOUT_MS) {
-                    @Suppress("BlockingMethodInNonBlockingContext")
-                    device.createInsecureL2capChannel(psm).also { socket ->
-                        socket.connect()
+                lateinit var socket: BluetoothSocket
+                val connectDurationMs = measureTimeMillis {
+                    socket = withTimeout(CONNECTION_TIMEOUT_MS) {
+                        @Suppress("BlockingMethodInNonBlockingContext")
+                        device.createInsecureL2capChannel(psm).also { createdSocket ->
+                            Log.d(TAG, "Socket created, invoking connect()")
+                            createdSocket.connect()
+                        }
                     }
                 }
 
@@ -98,8 +111,11 @@ class BleConnectionManager(private val context: Context) {
                     outputStream = socket.outputStream
                 )
 
+                currentConnection?.let {
+                    Log.w(TAG, "Replacing existing connection to ${it.remoteAddress}")
+                }
                 currentConnection = connection
-                Log.i(TAG, "L2CAP connected to $address on PSM $psm")
+                Log.i(TAG, "L2CAP connected | address=$address psm=$psm durationMs=$connectDurationMs")
                 Result.success(connection)
 
             } catch (e: SecurityException) {
@@ -122,6 +138,9 @@ class BleConnectionManager(private val context: Context) {
             Log.i(TAG, "Disconnecting from ${connection.remoteAddress}")
             connection.close()
             currentConnection = null
+            Log.d(TAG, "Disconnected and cleared current connection")
+        } ?: run {
+            Log.d(TAG, "disconnect() called with no active connection")
         }
     }
 
