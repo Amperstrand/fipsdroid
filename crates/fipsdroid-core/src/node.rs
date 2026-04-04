@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use microfips_core::noise;
 use microfips_protocol::node::{Node, NodeEvent, NodeHandler};
 use microfips_protocol::transport::{CryptoRng, RngCore, Transport};
 use rand::rngs::OsRng;
@@ -88,9 +87,14 @@ pub struct FipsDroidNode<T: Transport<Error = FipsDroidError>, R: RngCore + Cryp
 }
 
 impl<T: Transport<Error = FipsDroidError> + Send + 'static> FipsDroidNode<T, OsRng> {
-    pub fn new(config: NodeConfig, transport: T, state_tx: Sender<ConnectionState>) -> Result<Self> {
-        let (local_secret, peer_pub) = generate_key_material();
-        let node = Node::new(transport, OsRng, local_secret, peer_pub);
+    pub fn new(
+        config: NodeConfig,
+        transport: T,
+        state_tx: Sender<ConnectionState>,
+        local_secret: [u8; 32],
+        peer_pubkey: [u8; 33],
+    ) -> Result<Self> {
+        let node = Node::new(transport, OsRng, local_secret, peer_pubkey);
         let heartbeat_status = Arc::new(Mutex::new(HeartbeatStatus {
             sent_count: 0,
             received_count: 0,
@@ -144,24 +148,7 @@ where
     }
 }
 
-fn generate_key_material() -> ([u8; 32], [u8; 33]) {
-    let mut local_secret = [0u8; 32];
-    let mut peer_secret = [0u8; 32];
 
-    loop {
-        OsRng.fill_bytes(&mut local_secret);
-        if noise::ecdh_pubkey(&local_secret).is_ok() {
-            break;
-        }
-    }
-
-    loop {
-        OsRng.fill_bytes(&mut peer_secret);
-        if let Ok(peer_pub) = noise::ecdh_pubkey(&peer_secret) {
-            return (local_secret, peer_pub);
-        }
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -169,6 +156,15 @@ mod tests {
     use crate::transport::MockBleTransport;
     use tokio::runtime::Builder;
     use tokio::sync::mpsc;
+
+    fn test_key_material() -> ([u8; 32], [u8; 33]) {
+        let local_secret = [0x11u8; 32];
+        let peer_pubkey = [0x02, 0xAB, 0xCD, 0xEF, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 
+                          0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF,
+                          0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99,
+                          0xAA, 0xBB, 0xCC];
+        (local_secret, peer_pubkey)
+    }
 
     #[test]
     fn test_node_creation() {
@@ -178,8 +174,9 @@ mod tests {
             peer_address: "00:11:22:33:44:55".to_string(),
             psm: 0x0085,
         };
+        let (local_secret, peer_pubkey) = test_key_material();
 
-        let node = FipsDroidNode::new(config, transport, state_tx);
+        let node = FipsDroidNode::new(config, transport, state_tx, local_secret, peer_pubkey);
         assert!(node.is_ok(), "FipsDroidNode::new() should return Ok");
     }
 
@@ -193,8 +190,9 @@ mod tests {
                 peer_address: "00:11:22:33:44:55".to_string(),
                 psm: 0x0085,
             };
+            let (local_secret, peer_pubkey) = test_key_material();
 
-            let mut node = FipsDroidNode::new(config, transport, state_tx).unwrap();
+            let mut node = FipsDroidNode::new(config, transport, state_tx, local_secret, peer_pubkey).unwrap();
             let handler = node.handler.as_mut().unwrap();
 
             handler.on_event(NodeEvent::Connected).await;
@@ -217,8 +215,9 @@ mod tests {
                 peer_address: "00:11:22:33:44:55".to_string(),
                 psm: 0x0085,
             };
+            let (local_secret, peer_pubkey) = test_key_material();
 
-            let mut node = FipsDroidNode::new(config, transport, state_tx).unwrap();
+            let mut node = FipsDroidNode::new(config, transport, state_tx, local_secret, peer_pubkey).unwrap();
             let handler = node.handler.as_mut().unwrap();
 
             handler.on_event(NodeEvent::HeartbeatSent).await;

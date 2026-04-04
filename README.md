@@ -89,6 +89,7 @@ cd android && ./gradlew assembleDebug
 
 - [microfips](https://github.com/Amperstrand/microfips) — Embedded FIPS protocol implementation
 - [fips](https://github.com/jmcorgan/fips) — Upstream FIPS daemon
+- [fips (fork for macOS)](https://github.com/Amperstrand/fips) — Fork with macOS compatibility improvements
 
 ## License
 

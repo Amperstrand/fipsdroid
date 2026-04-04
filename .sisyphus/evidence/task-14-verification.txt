@@ -1,0 +1,41 @@
+Task 14: Fork jmcorgan/fips + macOS Build Verification
+
+## Verification Results
+
+### Fork and Clone
+- ✅ Fork exists: https://github.com/Amperstrand/fips
+- ✅ Clone exists: ~/src/fips
+- ✅ Branch created: feature/corebluetooth
+
+### Code Structure Verification
+- ✅ src/transport/ble/io.rs exists (27263 bytes)
+- ✅ All 4 BLE traits verified:
+  - `pub trait BleStream` (line 16)
+  - `pub trait BleAcceptor` (line 53)
+  - `pub trait BleScanner` (line 53)
+  - `pub trait BleIo` (line 67)
+
+### Cargo.toml Verification
+- ✅ Feature flags confirmed:
+  - `default = ["tui", "ble"]`
+  - `tui = ["dep:ratatui"]`
+  - `ble = ["dep:bluer"]`
+
+### Build Status
+- ❌ Cargo build fails due to tun/netlink incompatibility on macOS
+  - Issue: `tun = { version = "0.8.5", features = ["async"] }` pulls in `netlink-sys`
+  - Root cause: `netlink-sys` uses Linux-specific constants (PF_NETLINK, SOCK_CLOEXEC, etc.)
+  - These don't exist in macOS's `libc` (uses PF_HYLINK, O_CLOEXEC instead)
+  - Compilation error count: 41 errors in netlink-sys crate
+
+### Resolution Strategy
+1. Replace `tun` with `tun2` (macOS-compatible alternative)
+2. Update `rtnetlink` to use `netlink-packet-route` with platform guards
+3. Or implement custom TUN device on macOS using `tun2` crate
+
+### Documentation
+- ✅ Fork link added to fipsdroid README.md (Related Projects section)
+- ✅ Findings documented in .sisyphus/notepads/fipsdroid-revised/learnings.md
+
+## Next Steps
+- Task 16: Implement CoreBluetooth transport (after macOS build is fixed)
