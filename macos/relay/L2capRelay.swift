@@ -97,6 +97,7 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
     private let readQueue = DispatchQueue(label: "com.fips.tcp-reader", qos: .utility)
     
     func open(channel: CBL2CAPChannel) {
+        FileHandle.standardError.write(Data(">>> DEBUG: L2CAPChannelHandler.open() called\n".utf8))
         inputStream = channel.inputStream
         outputStream = channel.outputStream
 
@@ -108,15 +109,19 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
         outputStream?.schedule(in: .main, forMode: .default)
         outputStream?.open()
 
+        FileHandle.standardError.write(Data(">>> DEBUG: L2CAPChannelHandler.open() about to log\n".utf8))
         logInfo("=== L2CAP CHANNEL OPENED ===")
+        FileHandle.standardError.write(Data(">>> DEBUG: L2CAPChannelHandler.open() returning\n".utf8))
     }
     
     func connectTCP(host: String, port: Int) {
+        FileHandle.standardError.write(Data(">>> DEBUG: connectTCP() called with host=\(host) port=\(port)\n".utf8))
         logInfo("Connecting to TCP \(host):\(port)")
         
         var input: InputStream?
         var output: OutputStream?
         
+        FileHandle.standardError.write(Data(">>> DEBUG: calling Stream.getStreamsToHost\n".utf8))
         Stream.getStreamsToHost(withName: host, port: port, inputStream: &input, outputStream: &output)
         
         guard let tcpIn = input, let tcpOut = output else {
@@ -433,9 +438,15 @@ class PeripheralManager: NSObject, CBPeripheralManagerDelegate {
             self?.channelHandler = nil
         }
         channelHandler = handler
-        channelHandler?.open(channel: channel)
+        FileHandle.standardError.write(Data(">>> DEBUG: handler = \(handler), channelHandler = \(String(describing: channelHandler))\n".utf8))
+        handler.open(channel: channel)
+        FileHandle.standardError.write(Data(">>> DEBUG: open() returned\n".utf8))
         
+        FileHandle.standardError.write(Data(">>> DEBUG: About to call connectTCP\n".utf8))
+        logInfo("About to connect TCP to \(daemonHost):\(daemonPort)")
         handler.connectTCP(host: daemonHost, port: daemonPort)
+        FileHandle.standardError.write(Data(">>> DEBUG: connectTCP returned\n".utf8))
+        logInfo("connectTCP returned")
     }
     
     func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {

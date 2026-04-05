@@ -23,7 +23,8 @@ private const val CONNECTION_TIMEOUT_MS = 10_000L
 class L2capConnection(
     private val socket: BluetoothSocket,
     val inputStream: InputStream,
-    val outputStream: OutputStream
+    val outputStream: OutputStream,
+    val psm: Int
 ) : Closeable {
 
     val isConnected: Boolean
@@ -108,7 +109,8 @@ class BleConnectionManager(private val context: Context) {
                 val connection = L2capConnection(
                     socket = socket,
                     inputStream = socket.inputStream,
-                    outputStream = socket.outputStream
+                    outputStream = socket.outputStream,
+                    psm = psm
                 )
 
                 currentConnection?.let {

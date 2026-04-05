@@ -62,6 +62,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val peerAddress = intent.getStringExtra("peer_address") ?: DEFAULT_PEER_ADDRESS
+        val autoConnect = intent.getBooleanExtra("auto_connect", false)
 
         setContent {
             FipsDroidTheme {
@@ -95,6 +96,13 @@ class MainActivity : ComponentActivity() {
                     val viewModel: BridgeViewModel = viewModel(
                         factory = BridgeViewModelFactory(context, peerAddress)
                     )
+
+                    if (autoConnect) {
+                        LaunchedEffect(Unit) {
+                            kotlinx.coroutines.delay(2000L)
+                            viewModel.connect()
+                        }
+                    }
 
                     val connectionState by viewModel.connectionState.collectAsState()
                     val heartbeatStatus by viewModel.heartbeatStatus.collectAsState()

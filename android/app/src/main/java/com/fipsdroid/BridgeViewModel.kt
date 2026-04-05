@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private const val TAG = "BridgeViewModel"
 private const val RELAY_POLL_INTERVAL_MS = 50L
 private const val RECONNECT_DELAY_MS = 3000L
+private val OBSERVED_PSM_FALLBACKS = listOf(0x0085, 192, 194, 195, 196, 197)
 
 enum class BridgeMode {
     UNIFFI,
@@ -78,6 +79,22 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
         } catch (e: Exception) {
             nativeLibLoaded.set(false)
             appendLog("W", "Native library load error: ${e.message} — running in demo mode")
+        }
+
+        if (nativeLibLoaded.get()) {
+            try {
+                com.sun.jna.Native.load("fipsdroid_core", com.sun.jna.Library::class.java)
+                appendLog("I", "JNA dispatch available — UniFFI bridge mode enabled")
+            } catch (e: UnsatisfiedLinkError) {
+                nativeLibLoaded.set(false)
+                appendLog("W", "JNA dispatch not available — falling back to demo mode")
+            } catch (e: NoClassDefFoundError) {
+                nativeLibLoaded.set(false)
+                appendLog("W", "JNA classes not found — falling back to demo mode")
+            } catch (e: Exception) {
+                nativeLibLoaded.set(false)
+                appendLog("W", "JNA dispatch test failed — falling back to demo mode")
+            }
         }
     }
 
@@ -181,22 +198,16 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
                     }
                 }
 
-                val bleResult = withContext(Dispatchers.IO) {
-                    bleConnectionManager.connect(address, PSM_FIPS)
+                val connection = tryL2capConnect(address)
+                if (connection != null) {
+                    currentConnection = connection
+                    appendLog("I", "BLE L2CAP connected to $address — starting UniFFI bridge")
+                    startUniFFIRelay(connection, callback)
+                } else {
+                    appendLog("E", "BLE connection failed on all PSM candidates")
+                    _connectionState.value = ConnectionState.Error("BLE connection failed on all PSM candidates")
+                    isConnecting.set(false)
                 }
-
-                bleResult.fold(
-                    onSuccess = { conn ->
-                        currentConnection = conn
-                        appendLog("I", "BLE L2CAP connected to $address on PSM $PSM_FIPS")
-                        startUniFFIRelay(conn, callback)
-                    },
-                    onFailure = { error ->
-                        appendLog("E", "BLE connection failed: ${error.message}")
-                        _connectionState.value = ConnectionState.Error(error.message ?: "Connection failed")
-                        isConnecting.set(false)
-                    }
-                )
             } catch (e: FipsDroidException) {
                 appendLog("E", "UniFFI bridge error: ${e.message}")
                 _connectionState.value = ConnectionState.Error(e.message ?: "Bridge error")
@@ -275,26 +286,39 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
         bridgeMode = BridgeMode.DEMO_PING_PONG
         viewModelScope.launch {
             appendLog("I", "Demo mode: connecting via BLE L2CAP for ping-pong test")
-            appendLog("I", "To enable full FIPS protocol, build and include libfipsdroid_core.so")
 
-            val result = withContext(Dispatchers.IO) {
-                bleConnectionManager.connect(address, PSM_FIPS)
+            val connection = tryL2capConnect(address)
+            if (connection != null) {
+                currentConnection = connection
+                _connectionState.value = ConnectionState.Connected
+                appendLog("I", "BLE L2CAP connected (demo mode)")
+                startDemoPingPong(connection)
+            } else {
+                appendLog("E", "BLE connection failed on all PSM candidates")
+                _connectionState.value = ConnectionState.Error("BLE connection failed on all PSM candidates")
+                isConnecting.set(false)
             }
+        }
+    }
 
+    private suspend fun tryL2capConnect(address: String): L2capConnection? {
+        appendLog("I", "Trying PSM candidates: ${OBSERVED_PSM_FALLBACKS.joinToString(", ") { "0x%04X".format(it) }}")
+        for ((index, psm) in OBSERVED_PSM_FALLBACKS.withIndex()) {
+            appendLog("I", "L2CAP attempt ${index + 1}/${OBSERVED_PSM_FALLBACKS.size} using PSM=$psm")
+            val result = withContext(Dispatchers.IO) {
+                bleConnectionManager.connect(address, psm)
+            }
             result.fold(
                 onSuccess = { conn ->
-                    currentConnection = conn
-                    _connectionState.value = ConnectionState.Connected
-                    appendLog("I", "BLE L2CAP connected (demo mode)")
-                    startDemoPingPong(conn)
+                    appendLog("I", "L2CAP connected on PSM=$psm")
+                    return conn
                 },
                 onFailure = { error ->
-                    appendLog("E", "BLE connection failed: ${error.message}")
-                    _connectionState.value = ConnectionState.Error(error.message ?: "Connection failed")
-                    isConnecting.set(false)
+                    appendLog("W", "PSM=$psm failed: ${error.message}")
                 }
             )
         }
+        return null
     }
 
     private fun startDemoPingPong(connection: L2capConnection) {
@@ -400,10 +424,14 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
                 found = true
                 _peerAddress.value = address
                 scanCallback?.let { cb ->
+                    scanner.stopScan(cb)
                     viewModelScope.launch {
-                        withContext(Dispatchers.Main) {
-                            scanner.stopScan(cb)
-                            connect()
+                        _connectionState.value = ConnectionState.Connecting
+                        appendLog("I", "Connecting to discovered peer $address via BLE L2CAP")
+                        if (nativeLibLoaded.get()) {
+                            connectWithUniFFI(address)
+                        } else {
+                            connectDemoMode(address)
                         }
                     }
                 }
