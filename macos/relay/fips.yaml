@@ -1,0 +1,17 @@
+node:
+  identity:
+    nsec: "nsec12utulnlrtlzarey6ldhn9ujkp5z5fu69qqgk553y9qa8xqsrmlsqj0re0v"
+    persistent: true
+
+transports:
+  tcp:
+    bind_addr: "127.0.0.1:4443"
+    mtu: 1400
+
+peers:
+  - npub: "npub1gkwsjlz8jztvapxe6h5rvmw636ckwj2he8rnawqf0408nln0c65swvkxac"
+    alias: "android-peer"
+    addresses:
+      - transport: tcp
+        addr: "127.0.0.1:4443"
+    connect_policy: auto_connect

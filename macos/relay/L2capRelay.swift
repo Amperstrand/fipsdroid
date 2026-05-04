@@ -97,7 +97,6 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
     private let readQueue = DispatchQueue(label: "com.fips.tcp-reader", qos: .utility)
     
     func open(channel: CBL2CAPChannel) {
-        FileHandle.standardError.write(Data(">>> DEBUG: L2CAPChannelHandler.open() called\n".utf8))
         inputStream = channel.inputStream
         outputStream = channel.outputStream
 
@@ -109,19 +108,15 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
         outputStream?.schedule(in: .main, forMode: .default)
         outputStream?.open()
 
-        FileHandle.standardError.write(Data(">>> DEBUG: L2CAPChannelHandler.open() about to log\n".utf8))
         logInfo("=== L2CAP CHANNEL OPENED ===")
-        FileHandle.standardError.write(Data(">>> DEBUG: L2CAPChannelHandler.open() returning\n".utf8))
     }
     
     func connectTCP(host: String, port: Int) {
-        FileHandle.standardError.write(Data(">>> DEBUG: connectTCP() called with host=\(host) port=\(port)\n".utf8))
         logInfo("Connecting to TCP \(host):\(port)")
         
         var input: InputStream?
         var output: OutputStream?
         
-        FileHandle.standardError.write(Data(">>> DEBUG: calling Stream.getStreamsToHost\n".utf8))
         Stream.getStreamsToHost(withName: host, port: port, inputStream: &input, outputStream: &output)
         
         guard let tcpIn = input, let tcpOut = output else {
@@ -244,13 +239,15 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
         if stream == inputStream {
             switch eventCode {
             case .hasBytesAvailable:
-                readAndForward()
+                readBLEAndForwardToTCP()
             case .errorOccurred:
                 logError("BLE RX ERROR: \(stream.streamError?.localizedDescription ?? "unknown")")
                 close()
             case .endEncountered:
                 logInfo("BLE RX CLOSED: stream ended")
                 close()
+            case .openCompleted:
+                logInfo("BLE inputStream opened")
             default:
                 break
             }
@@ -269,17 +266,16 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
         }
     }
     
-    private func readAndForward() {
-        guard let input = inputStream, let tcpOut = tcpOutputStream else { return }
+    private func readBLEAndForwardToTCP() {
+        guard let input = inputStream, let tcpOut = tcpOutputStream else {
+            logDebug("BLE→TCP: streams not ready yet")
+            return
+        }
         var buffer = [UInt8](repeating: 0, count: 4096)
-
         let bytesRead = input.read(&buffer, maxLength: buffer.count)
         if bytesRead > 0 {
             let data = Data(bytes: buffer, count: bytesRead)
-            
-            // Forward directly to TCP (raw forwarding)
             let written = tcpOut.write(buffer, maxLength: bytesRead)
-            
             if written != bytesRead {
                 logError("BLE→TCP: Write failed (wrote \(written)/\(bytesRead) bytes)")
                 close()
@@ -289,7 +285,7 @@ class L2CAPChannelHandler: NSObject, StreamDelegate {
             }
         }
     }
-    
+
     func close() {
         if closed {
             return
@@ -438,14 +434,10 @@ class PeripheralManager: NSObject, CBPeripheralManagerDelegate {
             self?.channelHandler = nil
         }
         channelHandler = handler
-        FileHandle.standardError.write(Data(">>> DEBUG: handler = \(handler), channelHandler = \(String(describing: channelHandler))\n".utf8))
         handler.open(channel: channel)
-        FileHandle.standardError.write(Data(">>> DEBUG: open() returned\n".utf8))
         
-        FileHandle.standardError.write(Data(">>> DEBUG: About to call connectTCP\n".utf8))
         logInfo("About to connect TCP to \(daemonHost):\(daemonPort)")
         handler.connectTCP(host: daemonHost, port: daemonPort)
-        FileHandle.standardError.write(Data(">>> DEBUG: connectTCP returned\n".utf8))
         logInfo("connectTCP returned")
     }
     

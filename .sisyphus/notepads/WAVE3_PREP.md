@@ -1,5 +1,8 @@
 # Wave 3 Integration Preparation Checklist
 
+> **Status Update (2026-04-04):** This note is historical. Active execution tracking moved to `.sisyphus/plans/fips-bridge-integration.md`.
+> The checkboxes below were refreshed to match the currently verified repo/runtime state.
+
 ## Wave 3 Overview
 
 **Tasks**: 11 (Android↔Rust Integration) + 12 (Debug UI) + 13 (Pre-Handshake Pubkey Exchange)
@@ -19,9 +22,9 @@
 - [x] Task 8: UniFFI Bridge - Complete
 - [x] Task 9: Android BLE Manager - Complete
 - [x] Task 10: Cargo-ndk - Complete
-- [ ] Task 11: Android↔Rust Integration
-- [ ] Task 12: Debug UI - Connection State Display
-- [ ] Task 13: Pre-Handshake Pubkey Exchange
+- [ ] Task 11: Android↔Rust Integration (still incomplete in current app wiring)
+- [x] Task 12: Debug UI - Connection State Display
+- [x] Task 13: Pre-Handshake Pubkey Exchange (superseded by skip-pubkey bridge strategy)
 
 ## Wave 3 Preparation
 
@@ -151,6 +154,6 @@ After Wave 3 completes, we will have:
 
 ---
 
-**Status**: Ready for Wave 3 execution
-**Estimated Completion**: Multi-day (integration complexity)
-**Risk**: High (FFI boundary, threading model)
+**Status**: Partially complete; active blocker is Android↔Rust wiring in main app flow
+**Estimated Completion**: Multi-day (remaining integration + E2E validation)
+**Risk**: High (FFI boundary, BLE runtime conditions, Mac Bluetooth availability)

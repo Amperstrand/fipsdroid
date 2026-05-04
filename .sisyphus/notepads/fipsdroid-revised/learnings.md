@@ -1,5 +1,22 @@
 # Learnings
 
+## Runtime Reality Check (2026-04-04)
+
+### Evidence gathered
+- ✅ `cargo test -p fipsdroid-core` passed: 19 passed, 0 failed
+- ✅ `./gradlew :app:assembleDebug` and `./gradlew :app:installDebug` succeeded
+- ✅ `adb logcat` confirms BLE runtime logs can be read from device
+- ⚠️ Swift relay log (`/tmp/fips-l2cap.log`) reports `Bluetooth OFF` on Mac
+
+### Confirmed current capability
+- `BleDemoActivity` can launch and scan, with detailed BLE logs.
+- Main app (`MainActivity`) is not wired to the Rust bridge yet (connect/disconnect handlers are TODO placeholders).
+- `BridgeViewModel.kt` is absent, so there is no integrated byte relay loop (`feedIncoming`/`pollOutgoing`) in the main flow.
+
+### Confirmed blockers
+- Mac Bluetooth state must be ON before BLE discovery/connection can be proven.
+- Leaf-node proof (`Established` + heartbeat increments in integrated path) is not complete yet.
+
 ## Task 14: Fork jmcorgan/fips + macOS Build Verification
 
 ### Completed Actions

@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 private const val TAG = "BridgeViewModel"
 private const val RELAY_POLL_INTERVAL_MS = 50L
 private const val RECONNECT_DELAY_MS = 3000L
-private val OBSERVED_PSM_FALLBACKS = listOf(0x0085, 192, 194, 195, 196, 197)
+private val OBSERVED_PSM_FALLBACKS = listOf(192, 194, 195, 196, 197, 198, 199, 200, 0x0085)
 
 enum class BridgeMode {
     UNIFFI,
@@ -61,8 +61,18 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
     private val isConnecting = AtomicBoolean(false)
     private val nativeLibLoaded = AtomicBoolean(false)
 
-    private val testLocalPrivkey = ByteArray(32) { it.toByte() }
-    private val testPeerPubkey = ByteArray(33) { if (it == 0) 0x02 else it.toByte() }
+    private val localPrivkey = byteArrayOf(
+        0x88.toByte(), 0x6D.toByte(), 0x87.toByte(), 0x47.toByte(), 0xD7.toByte(), 0xD4.toByte(), 0x13.toByte(), 0xD5.toByte(), 0x7A.toByte(), 0x57.toByte(),
+        0x61.toByte(), 0x17.toByte(), 0xBD.toByte(), 0x44.toByte(), 0xC1.toByte(), 0x4A.toByte(), 0x9D.toByte(), 0x7A.toByte(), 0x97.toByte(), 0xDA.toByte(),
+        0x24.toByte(), 0x53.toByte(), 0x48.toByte(), 0x61.toByte(), 0x7F.toByte(), 0x2D.toByte(), 0xC0.toByte(), 0xC2.toByte(), 0x2B.toByte(), 0xF4.toByte(),
+        0x40.toByte(), 0x95.toByte()
+    )
+    private val peerPubkey = byteArrayOf(
+        0x02.toByte(), 0x8F.toByte(), 0xFB.toByte(), 0xBD.toByte(), 0x69.toByte(), 0xA8.toByte(), 0x5E.toByte(), 0x0A.toByte(), 0xF4.toByte(), 0x1F.toByte(),
+        0x26.toByte(), 0xF7.toByte(), 0xA9.toByte(), 0xB0.toByte(), 0x1F.toByte(), 0x00.toByte(), 0xE0.toByte(), 0x0E.toByte(), 0xF6.toByte(), 0xB8.toByte(),
+        0x16.toByte(), 0xB9.toByte(), 0xF3.toByte(), 0x9C.toByte(), 0x69.toByte(), 0xDC.toByte(), 0xDC.toByte(), 0x8C.toByte(), 0x20.toByte(), 0x3E.toByte(),
+        0x6E.toByte(), 0xDF.toByte(), 0xFF.toByte()
+    )
 
     init {
         detectNativeLib()
@@ -173,8 +183,8 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
             try {
                 uniffiBridge = FipsDroidBridge(
                     peerAddress = address,
-                    peerPubkey = testPeerPubkey,
-                    localPrivkey = testLocalPrivkey
+                    peerPubkey = peerPubkey,
+                    localPrivkey = localPrivkey
                 )
 
                 val callback = object : FipsDroidCallback {
@@ -418,7 +428,8 @@ class BridgeViewModel(private val context: Context) : ViewModel() {
                 val uuids = result.scanRecord?.serviceUuids
                     ?.any { it.uuid == serviceUuid } == true
 
-                if (!uuids && !name.contains("FIPS", ignoreCase = true)) return
+                if (!uuids && !name.contains("FIPS", ignoreCase = true) && !name.contains("macbook", ignoreCase = true)) return
+                if (name.contains("esp32", ignoreCase = true) || name.contains("esp", ignoreCase = true)) return
 
                 appendLog("I", "Found device: $address ($name) RSSI=${result.rssi}")
                 found = true
