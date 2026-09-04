@@ -154,3 +154,7 @@ TBD
 ## Contributing
 
 Not ready for contributions yet. Check back when the feasibility study is complete.
+
+> **STATUS: STALLED (2026-09-04)** — build/install-complete but not an integrated FIPS
+> node (TODO connect/disconnect handlers, stub Rust bridge, incomplete end-to-end Noise
+> validation). Parked as a feasibility artifact; see microfips for the active firmware path.
