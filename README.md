@@ -1,5 +1,7 @@
 # FIPSDroid
 
+> **STALLED feasibility artifact (2026)** — see [#5](https://github.com/Amperstrand/fipsdroid/issues/5); not under development.
+
 > ⚠️ **EXPERIMENTAL / WORK IN PROGRESS** ⚠️
 >
 > This project is in early development. Nothing is tested. Nothing is guaranteed to work.
