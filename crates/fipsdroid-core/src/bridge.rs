@@ -508,7 +508,7 @@ mod tests {
         )
         .unwrap();
 
-        let (callback, error_count) = ErrorCallback::new();
+        let (callback, _error_count) = ErrorCallback::new();
         let result = bridge.start(Box::new(callback));
         assert!(result.is_ok());
 
